@@ -1,3 +1,4 @@
+.vscode/
 /data/imgs/*
 !/data/imgs/.gitkeep
 /data/masks/*

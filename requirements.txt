@@ -1,8 +1,9 @@
+scipy
 numpy
 pandas
-opencv-python
+seaborn
+notebook
+matplotlib
 scikit-image
 scikit-learn
-scipy
-matplotlib
-seaborn
+opencv-python
