@@ -2,6 +2,7 @@ import os
 import cv2
 import pandas as pd
 from feature_A import get_asymmetry
+from feature_B import get_compactness
 from utils import MASK_DIR, OUTPUT_CSV_PATH
 
 def extract_all_features():
@@ -18,12 +19,16 @@ def extract_all_features():
             
             # 1. Extract Asymmetry
             asym_score = get_asymmetry(mask)
+
+            # 2. Extract border
+            border_score = get_compactness(mask)
             
             # 2. Append to our row dictionary
             results.append({
+                # Add results here
                 "img_id": img_id,
-                "asymmetry_score": asym_score
-                # You will add 'border_score', etc. here later
+                "asymmetry_score": asym_score,
+                "border_score": border_score
             })
             
     # Convert list of dictionaries to a pandas DataFrame
