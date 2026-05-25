@@ -197,4 +197,4 @@ def extract_all_features():
 
 
 if __name__ == "__main__":
-    extract_testing_baseline_features()
+    extract_baseline_features()
