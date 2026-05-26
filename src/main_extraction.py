@@ -6,6 +6,7 @@ import pandas as pd
 from feature_A import get_asymmetry
 from feature_B import get_compactness
 from feature_C import get_color_data
+from shortcuts import apply_shortcuts, load_shortcut_annotations
 from utils import (
     BASELINE_FEATURE_COLUMNS,
     BASELINE_FEATURES_CSV_PATH,
@@ -98,9 +99,18 @@ def load_image_and_mask(img_id):
     return image_rgb, mask
 
 
-def extract_features_for_row(row):
+def extract_features_for_row(row, brush_image=False, shortcut_annotations=None):
     img_id = normalize_img_id(row["img_id"])
     image, mask = load_image_and_mask(img_id)
+    feature_image = image
+
+    if brush_image:
+        shortcut_result = apply_shortcuts(
+            image,
+            img_id=img_id,
+            annotations=shortcut_annotations,
+        )
+        feature_image = shortcut_result.cleaned_image
 
     features = {
         "patient_id": row["patient_id"],
@@ -109,7 +119,7 @@ def extract_features_for_row(row):
         "asymmetry_score": get_asymmetry(mask),
         "border_score": get_compactness(mask),
     }
-    features.update(get_color_data(image, mask))
+    features.update(get_color_data(feature_image, mask))
     return features
 
 
@@ -119,7 +129,16 @@ def write_feature_batch(batch, output_path, include_header):
     features.to_csv(output_path, mode=write_mode, header=include_header, index=False)
 
 
-def extract_features(rows, output_path, batch_size=50):
+def extract_features(
+    rows,
+    output_path,
+    batch_size=50,
+    brush_images=False,
+    shortcut_annotations=None,
+):
+    if brush_images and shortcut_annotations is None:
+        shortcut_annotations = load_shortcut_annotations()
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     if os.path.exists(output_path):
         os.remove(output_path)
@@ -130,7 +149,11 @@ def extract_features(rows, output_path, batch_size=50):
     wrote_header = False
 
     for processed_rows, (_, row) in enumerate(rows.iterrows(), start=1):
-        result = extract_features_for_row(row)
+        result = extract_features_for_row(
+            row,
+            brush_image=brush_images,
+            shortcut_annotations=shortcut_annotations,
+        )
         results.append(result)
         batch.append(result)
 
@@ -158,18 +181,30 @@ def extract_baseline_features(output_path=BASELINE_FEATURES_CSV_PATH):
     return extract_features(rows, output_path)
 
 
-#TODO for the future: once the shortcut/brushing script creates cleaned images,
-# load those cleaned images here and write the same feature columns to
-# testing_extended_features.csv.
 def extract_testing_extended_features(output_path=TESTING_EXTENDED_FEATURES_CSV_PATH):
-    raise NotImplementedError("TODO: implement after the shortcut/brushing script exists.")
+    rows = load_testing_baseline_subset()
+    shortcut_annotations = load_shortcut_annotations()
+    return extract_features(
+        rows,
+        output_path,
+        brush_images=True,
+        shortcut_annotations=shortcut_annotations,
+    )
 
 
-#TODO for the future: once the shortcut/brushing script creates cleaned images,
-# extract all valid cleaned-image/mask pairs and write extended_features.csv.
 def extract_extended_features(output_path=EXTENDED_FEATURES_CSV_PATH):
-    raise NotImplementedError("TODO: implement after the shortcut/brushing script exists.")
+    rows = load_baseline_dataset_rows()
+    shortcut_annotations = load_shortcut_annotations()
+    return extract_features(
+        rows,
+        output_path,
+        brush_images=True,
+        shortcut_annotations=shortcut_annotations,
+    )
 
 
 if __name__ == "__main__":
-    extract_baseline_features()
+    # extract_testing_baseline_features()
+    # extract_baseline_features()
+    # extract_testing_extended_features()
+    extract_extended_features()
