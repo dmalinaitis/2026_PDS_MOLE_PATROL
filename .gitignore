@@ -4,3 +4,4 @@
 !/data/imgs/.gitkeep
 /data/masks/*
 !/data/masks/.gitkeep
+.test.ipynb

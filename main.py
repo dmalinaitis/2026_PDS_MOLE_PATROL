@@ -1,5 +1,7 @@
 import pandas as pd
 import pickle
+import src.traintestsplit
+import src.basemodeltrain
 
 def main(features_path, prediction_results_path, model_path, load_model):
     """
@@ -16,8 +18,7 @@ def main(features_path, prediction_results_path, model_path, load_model):
     valdf=pd.read_csv(validation_path)
 
     # split the dataset into training and testing sets.
-    from src import traintestsplit
-    train_index, train_group, test_index, test_group, validation = traintestsplit.spliting(df,valdf)
+    train_index, train_group, test_index, test_group, validation = src.traintestsplit.spliting(df,valdf)
 
     if load_model:
         # load the model
@@ -25,7 +26,9 @@ def main(features_path, prediction_results_path, model_path, load_model):
         pass
     else:
         # train the classifier (using logistic regression as an example)
-        clf = tree.DecisionTreeClassifier(max_depth=3, random_state=11037)
+        basefeatures = pd.read_csv(featuresbaseline_path)
+        basemodelarray = src.basemodeltrain.treebase(basefeatures, train_group)
+        MB1, MB2, MB3, MB4, MB5 = basemodelarray
         #gini based tree model, depth tbd. models to be trained off of groups from splitting.
         #
         # model1 = clf.fit(features, class), model2, etc each based on pulling from train_group[i] for features from set
@@ -46,6 +49,7 @@ def main(features_path, prediction_results_path, model_path, load_model):
 if __name__ == "__main__":
     metadata_path = "./data/metadata.csv"
     features_path = "./data/features.csv"
+    featuresbaseline_path = "./data/baseline_features.csv"
     validation_path = "./data/validation.csv"
     prediction_results_path = "./result/predictions/predictions_MODEL.csv"
     model_path = "./result/predictions/predictions_MODEL.csv"
