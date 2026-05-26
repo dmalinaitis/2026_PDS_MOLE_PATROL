@@ -34,21 +34,6 @@ def find_file(directory, stem, suffix="", extensions=IMAGE_EXTENSIONS):
     return None
 
 
-def has_image_and_mask(img_id):
-    image_path = find_file(IMGS_DIR, img_id, extensions=IMAGE_EXTENSIONS)
-    mask_path = find_file(MASK_DIR, img_id, suffix="_mask", extensions=MASK_EXTENSIONS)
-    return image_path is not None and mask_path is not None
-
-
-def has_nonempty_mask(img_id):
-    mask_path = find_file(MASK_DIR, img_id, suffix="_mask", extensions=MASK_EXTENSIONS)
-    if mask_path is None:
-        return False
-
-    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-    return mask is not None and (mask > 0).any()
-
-
 def has_usable_image_and_mask(img_id):
     image_path = find_file(IMGS_DIR, img_id, extensions=IMAGE_EXTENSIONS)
     mask_path = find_file(MASK_DIR, img_id, suffix="_mask", extensions=MASK_EXTENSIONS)
@@ -184,16 +169,6 @@ def extract_testing_extended_features(output_path=TESTING_EXTENDED_FEATURES_CSV_
 # extract all valid cleaned-image/mask pairs and write extended_features.csv.
 def extract_extended_features(output_path=EXTENDED_FEATURES_CSV_PATH):
     raise NotImplementedError("TODO: implement after the shortcut/brushing script exists.")
-
-
-def extract_testing_features():
-    """Backward-compatible alias for the testing baseline extraction."""
-    return extract_testing_baseline_features()
-
-
-def extract_all_features():
-    """Backward-compatible alias for full baseline extraction."""
-    return extract_baseline_features()
 
 
 if __name__ == "__main__":
