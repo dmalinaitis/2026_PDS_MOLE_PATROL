@@ -204,4 +204,7 @@ def extract_extended_features(output_path=EXTENDED_FEATURES_CSV_PATH):
 
 
 if __name__ == "__main__":
-    extract_baseline_features()
+    # extract_testing_baseline_features()
+    # extract_baseline_features()
+    # extract_testing_extended_features()
+    extract_extended_features()
