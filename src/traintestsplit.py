@@ -1,13 +1,5 @@
 from sklearn.model_selection import StratifiedGroupKFold
 import pandas as pd
-import os
-def cancer(x):
-  '''Function to change class labels to binary value of C and NC. '''
-  ctype = ['SCC','BCC','MEL']
-  if x in ctype:
-    return('C')
-  else:
-    return('NC')
 def spliting(df, valdf):
     '''Function that uses the metadata file of a given dataset, takes the image and patient ids with the lesion type and uses them 
     make a cross validation split using stratified group k folding.'''

@@ -2,6 +2,7 @@ import pandas as pd
 import pickle
 import src.traintestsplit
 import src.basemodeltrain
+import src.cancer
 
 def main(features_path, prediction_results_path, model_path, load_model):
     """
@@ -27,12 +28,15 @@ def main(features_path, prediction_results_path, model_path, load_model):
     else:
         # train the classifier (using logistic regression as an example)
         basefeatures = pd.read_csv(featuresbaseline_path)
+        basefeatures["diagnostic"] = basefeatures["diagnostic"].apply(src.cancer.cancer)
         basemodelarray = src.basemodeltrain.treebase(basefeatures, train_group)
         MB1, MB2, MB3, MB4, MB5 = basemodelarray
         #gini based tree model, depth tbd. models to be trained off of groups from splitting.
         #
         # model1 = clf.fit(features, class), model2, etc each based on pulling from train_group[i] for features from set
         #for testing each model looks at features and predices classifier, return prediction majority
+        for i in range(len(basemodelarray)):
+            src.modeltest.testing(basemodelarray[i], test_group[i], basefeatures)
         #
 
         # save the model.
