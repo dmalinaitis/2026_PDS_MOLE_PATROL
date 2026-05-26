@@ -11,6 +11,7 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 MASK_DIR = os.path.join(PROJECT_ROOT, "data", "masks")
 IMGS_DIR = os.path.join(PROJECT_ROOT, "data", "imgs")
 METADATA_CSV_PATH = os.path.join(DATA_DIR, "metadata.csv")
+ANNOTATIONS_CSV_PATH = os.path.join(DATA_DIR, "annotations_combined.csv")
 TESTING_BASELINE_FEATURES_CSV_PATH = os.path.join(
     DATA_DIR, "testing_baseline_features.csv"
 )
