@@ -4,7 +4,7 @@ import src.traintestsplit
 import src.basemodeltrain
 import src.cancer
 
-def main(features_path, prediction_results_path, model_path, load_model):
+def main(features_path, prediction_results_path, model_path, load_model,):
     """
     Docstring for main
     
@@ -17,7 +17,7 @@ def main(features_path, prediction_results_path, model_path, load_model):
     # load dataset and validation CSV file
     df=pd.read_csv(metadata_path)
     valdf=pd.read_csv(validation_path)
-
+    
     # split the dataset into training and testing sets.
     train_index, train_group, test_index, test_group, validation = src.traintestsplit.spliting(df,valdf)
 
@@ -43,10 +43,10 @@ def main(features_path, prediction_results_path, model_path, load_model):
         #save via pickle. pickle.dump(model once trained)
         pass
 
-    # test the classifier.
+        # test the classifier.
 
 
-    # write test results to CSV.
+        # write test results to CSV.
 
 
 
