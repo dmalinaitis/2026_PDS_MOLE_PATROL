@@ -1,4 +1,4 @@
-from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
 def treebase(basefeatures, train_group):
     basemodelarray = [None] * len(train_group)
     for i in range(len(train_group)):
@@ -7,10 +7,10 @@ def treebase(basefeatures, train_group):
 
 
 def submodel(train, basefeatures):
-    clf = tree.DecisionTreeClassifier(max_depth=3, random_state=11037)
+    clf = RandomForestClassifier(n_estimators=200,max_depth=4, random_state=11037)
     modeltraining=basefeatures[basefeatures["patient_id"].isin(train)]
     modeltraining=modeltraining.reset_index(drop=True)
     y = modeltraining["diagnostic"]
-    x = modeltraining.loc[:, 'asymmetry_score':'value_95p']
+    x = modeltraining.loc[:, 'asymmetry_score':'border_score']
     model = clf.fit(x,y)
     return model
