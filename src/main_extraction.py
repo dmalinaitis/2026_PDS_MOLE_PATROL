@@ -5,11 +5,12 @@ import pandas as pd
 
 from feature_A import get_asymmetry
 from feature_B import get_compactness
-from feature_C import get_color_data
+from feature_C import get_color_data, get_rgb_data
 from shortcuts import apply_shortcuts, load_shortcut_annotations
 from utils import (
     BASELINE_FEATURE_COLUMNS,
     BASELINE_FEATURES_CSV_PATH,
+    EXTENDED_FEATURE_COLUMNS,
     EXTENDED_FEATURES_CSV_PATH,
     IMAGE_EXTENSIONS,
     IMGS_DIR,
@@ -99,7 +100,12 @@ def load_image_and_mask(img_id):
     return image_rgb, mask
 
 
-def extract_features_for_row(row, brush_image=False, shortcut_annotations=None):
+def extract_features_for_row(
+    row,
+    brush_image=False,
+    shortcut_annotations=None,
+    include_rgb=False,
+):
     img_id = normalize_img_id(row["img_id"])
     image, mask = load_image_and_mask(img_id)
     feature_image = image
@@ -120,11 +126,13 @@ def extract_features_for_row(row, brush_image=False, shortcut_annotations=None):
         "border_score": get_compactness(mask),
     }
     features.update(get_color_data(feature_image, mask))
+    if include_rgb:
+        features.update(get_rgb_data(feature_image, mask))
     return features
 
 
-def write_feature_batch(batch, output_path, include_header):
-    features = pd.DataFrame(batch).reindex(columns=BASELINE_FEATURE_COLUMNS)
+def write_feature_batch(batch, output_path, include_header, feature_columns):
+    features = pd.DataFrame(batch).reindex(columns=feature_columns)
     write_mode = "w" if include_header else "a"
     features.to_csv(output_path, mode=write_mode, header=include_header, index=False)
 
@@ -135,6 +143,8 @@ def extract_features(
     batch_size=50,
     brush_images=False,
     shortcut_annotations=None,
+    include_rgb=False,
+    feature_columns=BASELINE_FEATURE_COLUMNS,
 ):
     if brush_images and shortcut_annotations is None:
         shortcut_annotations = load_shortcut_annotations()
@@ -153,20 +163,31 @@ def extract_features(
             row,
             brush_image=brush_images,
             shortcut_annotations=shortcut_annotations,
+            include_rgb=include_rgb,
         )
         results.append(result)
         batch.append(result)
 
         if len(batch) >= batch_size:
-            write_feature_batch(batch, output_path, include_header=not wrote_header)
+            write_feature_batch(
+                batch,
+                output_path,
+                include_header=not wrote_header,
+                feature_columns=feature_columns,
+            )
             wrote_header = True
             batch = []
             print(f"Processed {processed_rows}/{total_rows} rows", flush=True)
 
     if batch:
-        write_feature_batch(batch, output_path, include_header=not wrote_header)
+        write_feature_batch(
+            batch,
+            output_path,
+            include_header=not wrote_header,
+            feature_columns=feature_columns,
+        )
 
-    features = pd.DataFrame(results).reindex(columns=BASELINE_FEATURE_COLUMNS)
+    features = pd.DataFrame(results).reindex(columns=feature_columns)
     print(f"Saved {len(features)} feature rows to {output_path}")
     return features
 
@@ -200,6 +221,8 @@ def extract_extended_features(output_path=EXTENDED_FEATURES_CSV_PATH):
         output_path,
         brush_images=True,
         shortcut_annotations=shortcut_annotations,
+        include_rgb=True,
+        feature_columns=EXTENDED_FEATURE_COLUMNS,
     )
 
 

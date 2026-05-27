@@ -55,6 +55,12 @@ COLOR_FEATURE_COLUMNS = [
     "value_95p",
 ]
 
+RGB_GREY_FEATURE_COLUMNS = [
+    f"{channel}_{statistic}"
+    for channel in ("red", "green", "blue", "grey")
+    for statistic in ("mean", "std", "skew", "5p", "50p", "95p")
+]
+
 BASELINE_FEATURE_COLUMNS = [
     "patient_id",
     "diagnostic",
@@ -62,6 +68,16 @@ BASELINE_FEATURE_COLUMNS = [
     "asymmetry_score",
     "border_score",
     *COLOR_FEATURE_COLUMNS,
+]
+
+EXTENDED_FEATURE_COLUMNS = [
+    "patient_id",
+    "diagnostic",
+    "img_id",
+    "asymmetry_score",
+    *COLOR_FEATURE_COLUMNS,
+    *RGB_GREY_FEATURE_COLUMNS,
+    "border_score",
 ]
 
 TESTING_FEATURE_COLUMNS = BASELINE_FEATURE_COLUMNS
