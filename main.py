@@ -85,14 +85,14 @@ def main(extendedfeatures_path,basemodel_path,extendedmodel_path,greymodel_path,
 
     # test the classifier.
     # NO NOT UNCOMMENT OR TEST THIS FUNCTION UNTIL ALL OTHER TASKS ARE DONE, FAILURE TO DO SO WILL COMPROMISE PROJECT.
-    #base_accuracy, base_AUC, base_predictions, true_class = src.validation.testing(basemodelarray, validation, basefeatures)
-    #extended_accuracy, extended_AUC, extended_predictions, true_class = src.validation.testing(extendedmodelarray, validation, hsvfeatures)
-    #grey_accuracy, grey_AUC, grey_predictions, true_class = src.validation.testing(greymodelarray, validation, greyfeatures)
-    #rgb_accuracy, rgb_AUC, rgb_predictions, true_class = src.validation.testing(rgbmodelarray, validation, rgbfeatures)
-    #rgb_grey_accuracy, rgb_grey_AUC, rgb_grey_predictions, true_class = src.validation.testing(rgb_greymodelarray, validation, rgb_greyfeatures)
-    #hsv_grey_accuracy, hsv_grey_AUC, hsv_grey_predictions, true_class = src.validation.testing(hsv_greymodelarray, validation, hsv_greyfeatures)
-    #rgb_hsv_accuracy, rgb_hsv_AUC, rgb_hsv_predictions, true_class = src.validation.testing(rgb_hsvmodelarray, validation, rgb_hsvfeatures)
-    #allcolor_accuracy, allcolor_AUC, allcolor_predictions, true_class = src.validation.testing(allcolormodelarray, validation, extendedfeatures)
+    base_accuracy, base_AUC, base_predictions, true_class = src.validation.testing(basemodelarray, validation, basefeatures)
+    extended_accuracy, extended_AUC, extended_predictions, true_class = src.validation.testing(extendedmodelarray, validation, hsvfeatures)
+    grey_accuracy, grey_AUC, grey_predictions, true_class = src.validation.testing(greymodelarray, validation, greyfeatures)
+    rgb_accuracy, rgb_AUC, rgb_predictions, true_class = src.validation.testing(rgbmodelarray, validation, rgbfeatures)
+    rgb_grey_accuracy, rgb_grey_AUC, rgb_grey_predictions, true_class = src.validation.testing(rgb_greymodelarray, validation, rgb_greyfeatures)
+    hsv_grey_accuracy, hsv_grey_AUC, hsv_grey_predictions, true_class = src.validation.testing(hsv_greymodelarray, validation, hsv_greyfeatures)
+    rgb_hsv_accuracy, rgb_hsv_AUC, rgb_hsv_predictions, true_class = src.validation.testing(rgb_hsvmodelarray, validation, rgb_hsvfeatures)
+    allcolor_accuracy, allcolor_AUC, allcolor_predictions, true_class = src.validation.testing(allcolormodelarray, validation, extendedfeatures)
 
 
     # write test results to CSV.
@@ -104,14 +104,14 @@ if __name__ == "__main__":
     extendedfeatures_path = "./data/extended_features.csv"
     featuresbaseline_path = "./data/baseline_features.csv"
     validation_path = "./data/validation.csv"
-    prediction_results_base_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_extended_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_grey_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_rgb_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_rgb_grey_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_rgb_hsv_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_hsv_grey_path = "./results/predictions/predictions_MODEL.csv"
-    prediction_results_all_path = "./results/predictions/predictions_MODEL.csv"
+    prediction_results_base_path = "./results/predictions/predictions_base.csv"
+    prediction_results_extended_path = "./results/predictions/predictions_extended.csv"
+    prediction_results_grey_path = "./results/predictions/predictions_grey.csv"
+    prediction_results_rgb_path = "./results/predictions/predictions_rgb.csv"
+    prediction_results_rgb_grey_path = "./results/predictions/predictions_rgb_grey.csv"
+    prediction_results_rgb_hsv_path = "./results/predictions/predictions_rgb_hsv.csv"
+    prediction_results_hsv_grey_path = "./results/predictions/predictions_hsv_grey.csv"
+    prediction_results_all_path = "./results/predictions/predictions_all.csv"
     basemodel_path = "./results/models/basemodel.pkl"
     extendedmodel_path = "./results/models/extendedmodel.pkl"
     greymodel_path = "./results/models/greymodel.pkl"
