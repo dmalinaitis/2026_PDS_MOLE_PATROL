@@ -1,127 +1,81 @@
-import pandas as pd
+"""
+The Mole Patrol - train or load the eight Random Forest models and evaluate them.
+
+    python main.py           evaluate the saved models in results/models/ (reproduces the report)
+    python main.py --train   retrain all models from scratch, overwriting results/models/
+
+Each model is an ensemble of 5 Random Forests, one per cross-validation fold. The script
+prints each model's accuracy and AUC on the held-out validation patients and saves its
+validation predictions to results/predictions/. When training, it also prints the
+cross-validated AUC (mean +/- sd of each forest on its own fold's test patients).
+"""
 import pickle
-import src.traintestsplit
-import src.basemodeltrain
-import src.cancer
-import src.modeltest
-import src.validation
-import src.drop
+import sys
 
-def main(extendedfeatures_path,basemodel_path,extendedmodel_path,greymodel_path,rgbmodel_path,featuresbaseline_path,validation_path,allcolormodel_path,rgb_hsvmodel_path,hsv_greymodel_path,rgb_greymodel_path,prediction_results_base_path,prediction_results_extended_path,prediction_results_grey_path,prediction_results_rgb_path,prediction_results_rgb_grey_path,prediction_results_rgb_hsv_path,prediction_results_hsv_grey_path,prediction_results_all_path,load_model):
-    """
-    Docstring for main
-    
-    :param features_path: Path to the features csv used as input to the model (e.g. ./data/features.csv).
-    :param prediction_results_path: Path to save the output predictions of the model (e.g. ./result/predictions/predictions_MODEL.csv).
-    :param model_path: Path to save or load the trained model (e.g. ./result/predictions/predictions_MODEL.csv).
-    :param load_model: Boolean to train the model and save it to model_path if False, load it from model_path if True. 
-    """
-    
-    # load dataset and validation CSV file
-    df=pd.read_csv(metadata_path)
-    valdf=pd.read_csv(validation_path)
-    
-    # split the dataset into training and testing sets.
-    train_index, train_group, test_index, test_group, validation = src.traintestsplit.spliting(df,valdf)
+import numpy as np
+import pandas as pd
+import sklearn
+from sklearn.metrics import accuracy_score, roc_auc_score
 
-    if load_model:
-        # load the model
-        basemodelarray = pickle.load(open(basemodel_path, "rb"))
-        extendedmodelarray = pickle.load(open(extendedmodel_path, "rb"))
-        greymodelarray = pickle.load(open(greymodel_path, "rb"))
-        rgbmodelarray = pickle.load(open(rgbmodel_path, "rb"))
-        rgb_greymodelarray = pickle.load(open(rgb_greymodel_path, "rb"))
-        hsv_greymodelarray = pickle.load(open(hsv_greymodel_path, "rb"))
-        rgb_hsvmodelarray = pickle.load(open(rgb_hsvmodel_path, "rb"))
-        allcolormodelarray = pickle.load(open(allcolormodel_path, "rb"))
-        pass
-    else:
-        # train the classifier (using logistic regression as an example)
-        basefeatures = pd.read_csv(featuresbaseline_path)
-        extendedfeatures = pd.read_csv(extendedfeatures_path)
-        basefeatures["diagnostic"] = basefeatures["diagnostic"].apply(src.cancer.cancer)
-        extendedfeatures["diagnostic"] = extendedfeatures["diagnostic"].apply(src.cancer.cancer)
-        rgb_greyfeatures = src.drop.hsv(extendedfeatures)
-        greyfeatures = src.drop.rgb(rgb_greyfeatures)
-        rgb_hsvfeatures = src.drop.grey(extendedfeatures)
-        hsvfeatures = src.drop.rgb(rgb_hsvfeatures)
-        rgbfeatures = src.drop.grey(rgb_greyfeatures)
-        hsv_greyfeatures = src.drop.rgb(extendedfeatures)
+from src.model import cancer, cross_validate, drop_colours, split, train, validate
 
-        basemodelarray = src.basemodeltrain.treebase(basefeatures, train_group)
-        extendedmodelarray = src.basemodeltrain.treebase(hsvfeatures, train_group)
-        greymodelarray = src.basemodeltrain.treebase(greyfeatures, train_group)
-        rgbmodelarray = src.basemodeltrain.treebase(rgbfeatures, train_group)
-        rgb_greymodelarray = src.basemodeltrain.treebase(rgb_greyfeatures, train_group)
-        hsv_greymodelarray = src.basemodeltrain.treebase(hsv_greyfeatures, train_group)
-        rgb_hsvmodelarray = src.basemodeltrain.treebase(rgb_hsvfeatures, train_group)
-        allcolormodelarray = src.basemodeltrain.treebase(extendedfeatures, train_group)
-        #gini based tree model, depth tbd. models to be trained off of groups from splitting.
-        #
-        # model1 = clf.fit(features, class), model2, etc each based on pulling from train_group[i] for features from set
-        #for testing each model looks at features and predices classifier, return prediction majority
-        for i in range(len(basemodelarray)):
-            src.modeltest.testing(basemodelarray[i], test_group[i], basefeatures,i)
-            src.modeltest.testing(extendedmodelarray[i], test_group[i], hsvfeatures,i)
-            src.modeltest.testing(greymodelarray[i], test_group[i], greyfeatures,i)
-            src.modeltest.testing(rgbmodelarray[i], test_group[i], rgbfeatures,i)
-            src.modeltest.testing(rgb_greymodelarray[i], test_group[i], rgb_greyfeatures,i)
-            src.modeltest.testing(hsv_greymodelarray[i], test_group[i], hsv_greyfeatures,i)
-            src.modeltest.testing(rgb_hsvmodelarray[i], test_group[i], rgb_hsvfeatures,i)
-            src.modeltest.testing(allcolormodelarray[i], test_group[i], extendedfeatures,i)
-        #
-
-        # save the model.
-        pickle.dump(basemodelarray, open(basemodel_path, "wb"))
-        pickle.dump(extendedmodelarray, open(extendedmodel_path, "wb"))
-        pickle.dump(greymodelarray, open(greymodel_path, "wb"))
-        pickle.dump(rgbmodelarray, open(rgbmodel_path, "wb"))
-        pickle.dump(rgb_greymodelarray, open(rgb_greymodel_path, "wb"))
-        pickle.dump(hsv_greymodelarray, open(hsv_greymodel_path, "wb"))
-        pickle.dump(rgb_hsvmodelarray, open(rgb_hsvmodel_path, "wb"))
-        pickle.dump(allcolormodelarray, open(allcolormodel_path, "wb"))
-        #save via pickle. pickle.dump(model once trained)
-        pass
-
-    # test the classifier.
-    # NO NOT UNCOMMENT OR TEST THIS FUNCTION UNTIL ALL OTHER TASKS ARE DONE, FAILURE TO DO SO WILL COMPROMISE PROJECT.
-    base_accuracy, base_AUC, base_predictions, true_class = src.validation.testing(basemodelarray, validation, basefeatures)
-    extended_accuracy, extended_AUC, extended_predictions, true_class = src.validation.testing(extendedmodelarray, validation, hsvfeatures)
-    grey_accuracy, grey_AUC, grey_predictions, true_class = src.validation.testing(greymodelarray, validation, greyfeatures)
-    rgb_accuracy, rgb_AUC, rgb_predictions, true_class = src.validation.testing(rgbmodelarray, validation, rgbfeatures)
-    rgb_grey_accuracy, rgb_grey_AUC, rgb_grey_predictions, true_class = src.validation.testing(rgb_greymodelarray, validation, rgb_greyfeatures)
-    hsv_grey_accuracy, hsv_grey_AUC, hsv_grey_predictions, true_class = src.validation.testing(hsv_greymodelarray, validation, hsv_greyfeatures)
-    rgb_hsv_accuracy, rgb_hsv_AUC, rgb_hsv_predictions, true_class = src.validation.testing(rgb_hsvmodelarray, validation, rgb_hsvfeatures)
-    allcolor_accuracy, allcolor_AUC, allcolor_predictions, true_class = src.validation.testing(allcolormodelarray, validation, extendedfeatures)
+# Model name -> (feature table, colour groups removed from it, saved model file).
+# The base model uses the baseline table (original images). All other models use the
+# extended table (hair/pen removed, RGB + greyscale added) and only differ in which colour
+# spaces they keep, to answer the open question "which colour features work best?".
+MODELS = {
+    "base": ("baseline", [], "basemodel.pkl"),
+    "extended": ("extended", ["rgb", "grey"], "extendedmodel.pkl"),  # HSV only
+    "grey": ("extended", ["hsv", "rgb"], "greymodel.pkl"),
+    "rgb": ("extended", ["hsv", "grey"], "rgbmodel.pkl"),
+    "rgb_grey": ("extended", ["hsv"], "rgbgreymodel.pkl"),
+    "hsv_grey": ("extended", ["rgb"], "hsvgreymodel.pkl"),
+    "rgb_hsv": ("extended", ["grey"], "rgbhsvmodel.pkl"),
+    "all": ("extended", [], "allcolormodel.pkl"),  # HSV + RGB + greyscale
+}
 
 
-    # write test results to CSV.
+def main(load_model=True):
+    # Hold out the validation patients and split the rest into 5 patient-grouped folds
+    train_groups, test_groups, val_patients = split(
+        pd.read_csv("data/metadata.csv"), pd.read_csv("data/Validation.csv")
+    )
 
+    # Load both feature tables and turn the six diagnoses into the binary cancer label
+    tables = {}
+    for table in ("baseline", "extended"):
+        tables[table] = pd.read_csv(f"data/{table}_features.csv")
+        tables[table]["diagnostic"] = tables[table]["diagnostic"].apply(cancer)
+
+    # Other scikit-learn versions split the folds differently, so retraining changes the models
+    if not load_model and sklearn.__version__ != "1.7.2":
+        print(f"Warning: the saved models were trained with scikit-learn 1.7.2, you have {sklearn.__version__}, "
+              "so the retrained models will not reproduce the reported scores.\n")
+
+    print(f"{'model':<10}{'val. accuracy':>14}{'val. AUC':>10}" + ("" if load_model else "   CV AUC"))
+    for name, (table, removed, model_file) in MODELS.items():
+        features = drop_colours(tables[table], removed)
+        model_path = f"results/models/{model_file}"
+        if load_model:
+            with open(model_path, "rb") as f:
+                forests = pickle.load(f)
+        else:
+            forests = train(features, train_groups)
+            with open(model_path, "wb") as f:
+                pickle.dump(forests, f)
+
+        predictions = validate(forests, features, val_patients)
+        predictions.to_csv(f"results/predictions/predictions_{name}.csv", index=False)
+
+        # AUC is computed from the hard 0/1 votes (not probabilities), as in the report
+        accuracy = accuracy_score(predictions["true_label"], predictions["predicted_label"])
+        auc = roc_auc_score(predictions["true_label"], predictions["predicted_label"])
+        line = f"{name:<10}{accuracy:>14.4f}{auc:>10.4f}"
+        if not load_model:  # the fold test sets only match forests trained on this run's split
+            cv_aucs = cross_validate(forests, features, test_groups)
+            line += f"   {np.mean(cv_aucs):.3f} +/- {np.std(cv_aucs):.3f}"
+        print(line)
 
 
 if __name__ == "__main__":
-    metadata_path = "./data/metadata.csv"
-    extendedfeatures_path = "./data/extended_features.csv"
-    featuresbaseline_path = "./data/baseline_features.csv"
-    validation_path = "./data/validation.csv"
-    prediction_results_base_path = "./results/predictions/predictions_base.csv"
-    prediction_results_extended_path = "./results/predictions/predictions_extended.csv"
-    prediction_results_grey_path = "./results/predictions/predictions_grey.csv"
-    prediction_results_rgb_path = "./results/predictions/predictions_rgb.csv"
-    prediction_results_rgb_grey_path = "./results/predictions/predictions_rgb_grey.csv"
-    prediction_results_rgb_hsv_path = "./results/predictions/predictions_rgb_hsv.csv"
-    prediction_results_hsv_grey_path = "./results/predictions/predictions_hsv_grey.csv"
-    prediction_results_all_path = "./results/predictions/predictions_all.csv"
-    basemodel_path = "./results/models/basemodel.pkl"
-    extendedmodel_path = "./results/models/extendedmodel.pkl"
-    greymodel_path = "./results/models/greymodel.pkl"
-    rgbmodel_path = "./results/models/rgbmodel.pkl"
-    rgb_greymodel_path = "./results/models/rgbgreymodel.pkl"
-    hsv_greymodel_path = "./results/models/hsvgreymodel.pkl"
-    rgb_hsvmodel_path = "./results/models/rgbhsvmodel.pkl"
-    allcolormodel_path = "./results/models/allcolormodel.pkl"
-
-
-    load_model = False
-
-    main(extendedfeatures_path,basemodel_path,extendedmodel_path,greymodel_path,rgbmodel_path,featuresbaseline_path,validation_path,allcolormodel_path,rgb_hsvmodel_path,hsv_greymodel_path,rgb_greymodel_path,prediction_results_base_path,prediction_results_extended_path,prediction_results_grey_path,prediction_results_rgb_path,prediction_results_rgb_grey_path,prediction_results_rgb_hsv_path,prediction_results_hsv_grey_path,prediction_results_all_path,load_model)
+    main(load_model="--train" not in sys.argv)

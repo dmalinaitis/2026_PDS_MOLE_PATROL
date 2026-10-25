@@ -1,63 +1,48 @@
+"""Feature A - asymmetry: how much the lesion mask differs from its own mirror image."""
 import numpy as np
 from skimage.transform import rotate
 
-def midpointGroup4(mask):
-    """
-    Finds the vertical dividing line (x-coordinate) that splits the 
-    mask's area exactly in half.
-    """
-    summed = np.sum(mask, axis=0)
-    half_sum = np.sum(summed) / 2
-    for i, n in enumerate(np.add.accumulate(summed)):
-        if n > half_sum:
-            return i
-    return 0 # in case of an empty mask
+
+def midpoint(mask):
+    """x-coordinate of the vertical line that splits the lesion area in half."""
+    column_sums = np.sum(mask, axis=0)
+    half = np.sum(column_sums) / 2
+    for x, area_so_far in enumerate(np.add.accumulate(column_sums)):
+        if area_so_far > half:
+            return x
+    return 0  # empty mask
+
 
 def crop(mask):
-    """
-    Crops the mask symmetrically around the calculated midpoint.
-    """
-    mid = midpointGroup4(mask)
+    """Crop the mask to the lesion, symmetrically around its midpoint so it can be mirrored."""
+    mid = midpoint(mask)
     y_nonzero, x_nonzero = np.nonzero(mask)
-    
-    # Check if mask is empty to avoid errors
-    if len(y_nonzero) == 0 or len(x_nonzero) == 0:
-        return mask 
-        
+    if len(y_nonzero) == 0:  # empty mask
+        return mask
+
     y_lims = [np.min(y_nonzero), np.max(y_nonzero)]
-    x_lims = np.array([np.min(x_nonzero), np.max(x_nonzero)])
-    
-    # Force the x-limits to be perfectly symmetrical around the midpoint
-    x_dist = max(np.abs(x_lims - mid))
-    x_lims = [int(mid - x_dist), int(mid + x_dist)]
-    
-    # Handle edge cases where symmetric crop goes outside image bounds
-    x_lims[0] = max(0, x_lims[0])
-    x_lims[1] = min(mask.shape[1], x_lims[1])
-    
+    # Same distance to the left and right of the midpoint, clipped to the image borders
+    x_dist = max(np.abs(np.array([np.min(x_nonzero), np.max(x_nonzero)]) - mid))
+    x_lims = [max(0, int(mid - x_dist)), min(mask.shape[1], int(mid + x_dist))]
     return mask[y_lims[0]:y_lims[1], x_lims[0]:x_lims[1]]
 
+
 def get_asymmetry(mask):
-    """
-    Calculates a normalized asymmetry score by comparing the binary mask to
-    its left-right mirrored version across 6 different rotation angles.
+    """Asymmetry score from 0 (perfectly symmetric) to 1.
+
+    The cropped mask is compared with its left-right mirror: XOR counts the pixels that do
+    not overlap, normalised by twice the lesion area. This is repeated for 6 rotations of
+    30 degrees and the scores are averaged.
     """
     mask = (mask > 0).astype(np.uint8)
     scores = []
-    
-    # Loop 6 times, rotating 30 degrees each time (180 degrees total)
     for _ in range(6):
         segment = crop(mask)
         area = np.sum(segment)
-        
-        # Prevent division by zero if the cropped segment is empty
         if area == 0:
             scores.append(0)
         else:
-            # Compare against a left-right mirror and normalize to [0, 1].
-            xor_sum = np.sum(np.logical_xor(segment, np.fliplr(segment)))
-            scores.append(xor_sum / (2 * area))
-            
+            scores.append(np.sum(np.logical_xor(segment, np.fliplr(segment))) / (2 * area))
+        # order=0 (nearest neighbour) keeps the rotated mask binary
         mask = rotate(mask, 30, order=0, preserve_range=True).astype(np.uint8)
-        
     return sum(scores) / len(scores)

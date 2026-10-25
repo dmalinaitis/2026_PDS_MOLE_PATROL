@@ -1,9 +1,12 @@
-scipy
-numpy
-pandas
-seaborn
-notebook
-matplotlib
-scikit-image
-scikit-learn
-opencv-python
+# Exact versions the results were produced and verified with.
+# scikit-learn must stay at 1.7.2: other versions split the cross-validation folds
+# differently, so `python main.py --train` would produce different models and scores.
+numpy==2.4.6
+pandas==3.0.3
+scipy==1.17.1
+scikit-learn==1.7.2
+scikit-image==0.26.0
+opencv-python==4.13.0.92
+matplotlib==3.10.9
+seaborn==0.13.2
+notebook==7.5.6

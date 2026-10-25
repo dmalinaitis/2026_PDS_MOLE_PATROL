@@ -1,84 +1,37 @@
+"""Feature C - colour: summary statistics of the pixels inside the lesion mask."""
 import numpy as np
-from skimage.color import rgb2hsv
 from scipy.stats import skew
+from skimage.color import rgb2hsv
 
-def get_color_data(image, mask = None):
-    '''
-    Return a dict of color features for an image. For each channel (Hue, Saturaion, Value) return its mean, S
-    
-    Input: 
-        image - already loaded image
-        mask - already loaded mask
 
-    Output:
-        dictionary of color features
+def channel_stats(name, values):
+    """Mean, standard deviation, skew and 5th/50th/95th percentile of one colour channel."""
+    return {
+        f"{name}_mean": np.mean(values),
+        f"{name}_std": np.std(values),
+        f"{name}_skew": skew(values),
+        f"{name}_5p": np.percentile(values, 5),
+        f"{name}_50p": np.percentile(values, 50),
+        f"{name}_95p": np.percentile(values, 95),
+    }
 
-    Notes:
-        Clinical color rules or how to interpret the dictionary:
-            TO-DO 
-    '''
-    # convert to RGB from RGBA, then to HSV
-    if image.shape[-1] == 4:
-        image = image[:, :, :3]
-    image = rgb2hsv(image)
 
-    if mask is not None:
-        image = image[mask > 0]
-    else:
-        # reshape to 1D array for stats
-        image = image.reshape(-1, 3)
+def get_color_data(image, mask):
+    """HSV features: statistics of the hue, saturation and value (all 0-1) of the lesion pixels."""
+    pixels = rgb2hsv(image[:, :, :3])[mask > 0]  # drop an alpha channel if present
+    features = {}
+    for i, channel in enumerate(["hue", "saturation", "value"]):
+        features.update(channel_stats(channel, pixels[:, i]))
+    return features
 
-    color_data = {}
-    channel_names = ['hue', 'saturation', 'value']
-    
-    for ch_idx, ch_name in enumerate(channel_names):
-        data = image[:, ch_idx]
-        color_data[f'{ch_name}_mean'] = np.mean(data)
-        color_data[f'{ch_name}_std'] = np.std(data)
-        color_data[f'{ch_name}_skew'] = skew(data)
-        color_data[f'{ch_name}_5p'] = np.percentile(data, 5)
-        color_data[f'{ch_name}_50p'] = np.percentile(data, 50)
-        color_data[f'{ch_name}_95p'] = np.percentile(data, 95)
-    
-    return color_data
 
-def get_rgb_data(image, mask = None):
-    '''
-    Return a dict of RGB and greyscale features for an image. For each channel (Red, Green, Blue, Greyscale) return its mean, standard deviation, skew and 5, 50, 95 percentiles.
-
-    Input:
-        image - already loaded image
-        mask - already loaded mask
-
-    Output:
-        dictionary of RGB and greyscale features
-    '''
-    if image.shape[-1] == 4:
-        image = image[:, :, :3]
-
-    if mask is not None:
-        pixels = image[mask > 0]
-    else:
-        pixels = image.reshape(-1, 3)
-
-    rgb_data = {}
-    channel_names = ['red', 'green', 'blue']
-
-    for ch_idx, ch_name in enumerate(channel_names):
-        data = pixels[:, ch_idx].astype(float)
-        rgb_data[f'{ch_name}_mean'] = np.mean(data)
-        rgb_data[f'{ch_name}_std'] = np.std(data)
-        rgb_data[f'{ch_name}_skew'] = skew(data)
-        rgb_data[f'{ch_name}_5p'] = np.percentile(data, 5)
-        rgb_data[f'{ch_name}_50p'] = np.percentile(data, 50)
-        rgb_data[f'{ch_name}_95p'] = np.percentile(data, 95)
-
+def get_rgb_data(image, mask):
+    """RGB and greyscale features (0-255) of the lesion pixels, used in the extended feature set."""
+    pixels = image[:, :, :3][mask > 0]
+    features = {}
+    for i, channel in enumerate(["red", "green", "blue"]):
+        features.update(channel_stats(channel, pixels[:, i].astype(float)))
+    # Standard luminance weights for converting RGB to greyscale
     grey = (0.2989 * pixels[:, 0] + 0.5870 * pixels[:, 1] + 0.1140 * pixels[:, 2]).astype(float)
-    rgb_data['grey_mean'] = np.mean(grey)
-    rgb_data['grey_std'] = np.std(grey)
-    rgb_data['grey_skew'] = skew(grey)
-    rgb_data['grey_5p'] = np.percentile(grey, 5)
-    rgb_data['grey_50p'] = np.percentile(grey, 50)
-    rgb_data['grey_95p'] = np.percentile(grey, 95)
-
-    return rgb_data
+    features.update(channel_stats("grey", grey))
+    return features

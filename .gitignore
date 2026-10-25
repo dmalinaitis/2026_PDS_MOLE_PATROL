@@ -1,7 +1,9 @@
-.vscode/
-/src/__pycache__
+# PAD-UFES-20 images and masks are not committed (only the empty folders are)
 /data/imgs/*
 !/data/imgs/.gitkeep
 /data/masks/*
 !/data/masks/.gitkeep
-test*
+
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
